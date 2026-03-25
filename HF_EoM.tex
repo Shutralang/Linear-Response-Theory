@@ -1,0 +1,358 @@
+\documentclass[11pt,letterpaper]{article}
+
+% ── Page geometry ──
+\usepackage[margin=1in]{geometry}
+
+% ── Math ──
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}           % bold math symbols
+\usepackage{physics}       % \bra, \ket, \dv, \pdv, etc.
+
+% ── Graphics & floats ──
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% ── References & links ──
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=green!50!black,urlcolor=blue!70!black]{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+
+% ── Misc ──
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{booktabs}      % nice tables
+
+% ── Theorem-like environments ──
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+% ── Custom commands ──
+\newcommand{\ee}{\mathrm{e}}            % upright e
+\newcommand{\ii}{\mathrm{i}}            % imaginary unit
+\newcommand{\kB}{k_{\mathrm{B}}}        % Boltzmann constant
+\newcommand{\vect}[1]{\bm{#1}}          % vector notation
+\newcommand{\avg}[1]{\langle #1 \rangle}% ensemble average
+\newcommand{\eps}{\varepsilon}
+\newcommand{\w}{\omega}
+\newcommand{\dfdx}[2]{\frac{d #1}{d #2}} % total derivative
+\newcommand{\pfpx}[2]{\frac{\partial #1}{\partial #2}} % partial derivative
+
+% ══════════════════════════════════════════
+%  Title block
+% ══════════════════════════════════════════
+\title{Time Dependent Hartree-Fock and Linear Response Theory}
+\author{Matthew Shu Liang\thanks{Department of Physics, Hong Kong University of Science and Technology}\\ Claude Opus 4.6\thanks{Anthropic, San Francisco, CA 94110, USA}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+    This note reviews time dependent Hartree-Fock theory and how can it be used to calculate the linear response of a many-body system to an external perturbation. We specifically demonstrate that the TDHF response function has corrections from exchange interactions compared to the random phase approximation (RPA) response function.
+\end{abstract}
+
+\tableofcontents
+
+% ══════════════════════════════════════════
+\section{Density Matrix Formalism of EoM}
+\label{subsec:density_matrix}
+We start with a general many-body Hamiltonian \cite{shao2026}:
+\begin{gather}
+    \hat{H} = \sum_{ij}[t_{ij} + o_{ij} f(t)] \hat{c}^\dagger_i \hat{c}_j + \frac{1}{2} \sum_{ijkl} V_{ijkl} \hat{c}^\dagger_i \hat{c}^\dagger_j \hat{c}_k \hat{c}_l \label{eq:SB_Hamiltonian}
+\end{gather}
+where $o_{ij} f(t)$ is the external field perturbation. The Hemitinity requires:
+\begin{gather}
+    t_{ij} = t_{ji}^*, \quad o_{ij} = o_{ji}^*, \quad V_{ijkl} = V_{klij}^*
+\end{gather}
+Femionic anti-commutation requires:
+\begin{gather}
+    V_{ijkl} = -V_{jikl} = -V_{ijlk} = V_{jilk}
+\end{gather}
+The single-particle density matrix (time-dependent) is defined as:
+\begin{gather}
+    \rho_{mn} = \avg{\hat{c}^\dagger_n \hat{c}_m} = \bra{\Psi_0} e^{i H t/\hbar} \hat{c}^\dagger_n \hat{c}_m e^{-i H t/\hbar} \ket{\Psi_0} \label{def:density_matrix}
+\end{gather}
+The equation of motion is derived as:
+\begin{align}
+    i \hbar \partial_t \rho_{mn} =& \avg{[\hat{c}^\dagger_n \hat{c}_m, \hat{H}]} \\
+    =& \avg{\hat{c}^\dagger_n[\hat{c}_m, \hat{H}]} - \avg{[\hat{H}, \hat{c}^\dagger_n] \hat{c}_m} \\
+    =& (t_{mj} + o_{mj} f(t)) \rho_{jn} - (t_{in} + o_{in} f(t)) \rho_{mi} + V_{mikl} \avg{\hat{c}^\dagger_n \hat{c}^\dagger_i \hat{c}_k \hat{c}_l} - V_{klni} \avg{\hat{c}^\dagger_l \hat{c}^\dagger_k \hat{c}_i \hat{c}_m}, \label{eq:EoM_density_matrix}
+\end{align}
+where the Einstein summation is implied. We list the commutator involving interaction term for reference:
+\begin{align}
+    [\hat{c}_m, \hat{V}] =& \frac{1}{2} \sum_{ijkl} V_{ijkl} [\hat{c}_m, \hat{c}^\dagger_i \hat{c}^\dagger_j \hat{c}_k \hat{c}_l] \\
+    =& \frac{1}{2} \sum_{ijkl} V_{ijkl} \left(\hat{c}^\dagger_i \hat{c}^\dagger_j[\hat{c}_m, \hat{c}_k \hat{c}_l] + [\hat{c}_m, \hat{c}^\dagger_i \hat{c}^\dagger_j] \hat{c}_k \hat{c}_l \right) \\
+    =& \frac{1}{2} \sum_{ijkl} V_{ijkl} [\hat{c}_m, \hat{c}^\dagger_i \hat{c}^\dagger_j] \hat{c}_k \hat{c}_l \\
+    =& \frac{1}{2} \sum_{jkl} V_{mjkl} \hat{c}^\dagger_j \hat{c}_k \hat{c}_l - \frac{1}{2} \sum_{ikl} V_{imkl} \hat{c}^\dagger_i \hat{c}_k \hat{c}_l \\
+    =& \sum_{ikl} V_{mikl} \hat{c}^\dagger_i \hat{c}_k \hat{c}_l
+    \\[1.5em]
+    [\hat{H}, \hat{c}^\dagger_n] =& \left([\hat{c}_n, \hat{H}]\right)^\dagger
+\end{align}
+
+\section{Time Dependent Hartree-Fock}
+Under Hartree-Fock approximation, the ground state is assumed to be a slater determinant, therefore Eq.~\eqref{eq:EoM_density_matrix} can be written in a self-consistent mean-field of $\rho$:
+\begin{align}
+    i\hbar \partial_t \rho_{mn} =& (t_{mj} + o_{mj} f(t)) \rho_{jn} - (t_{in} + o_{in} f(t)) \rho_{mi} + V_{mikl} (\rho_{ln}\rho_{ki} - \rho_{kn}\rho_{li}) - V_{klni} (\rho_{ml}\rho_{ik} - \rho_{il}\rho_{mk}) \nonumber \\
+    =& [h(\rho)+of(t), \rho] \label{eq:EoM_mean_field} \\
+    h(\rho)_{mn} \coloneqq& t_{mn} + \sum_{ij}V_{mijn} \rho_{ji} - V_{minj} \rho_{ji}
+\end{align}
+Assuming the solution $\rho$ is unique, we can prove $\rho^2 = \rho$:
+\begin{gather}
+    i \hbar \partial_t (\rho^2) = \rho [h+of(t), \rho] + [h+of(t), \rho] \rho = [h+of(t), \rho^2] \Rightarrow \rho^2 = \rho
+\end{gather}
+When the external field is absent ($f(t)=0$), the system is in static ground state and $\rho$ is time-independent from the definition \eqref{def:density_matrix}, thus the mean-field EoM Eq.~\eqref{eq:EoM_mean_field} reduces to:
+\begin{gather}
+    0 = [h(\rho^0), \rho^0]
+\end{gather}
+While the mean-field eigenequation is ($f(t) = 0$):
+\begin{gather}
+    \avg{\hat{H}} = t_{ij} \rho^0_{ji} + \frac{1}{2} \sum_{ijkl} V_{ijkl} (\rho^0_{li} \rho^0_{kj} - \rho^0_{ki} \rho^0_{lj}) \\
+    \frac{\delta \avg{\hat{H}}}{\delta \bra{\Psi_0}} = E^0 \ket{\Psi_0} \Rightarrow \sum_{ij} h(\rho^0)_{ij} \hat{c}^\dagger_i \hat{c}_j \ket{\Psi_0} = E^0 \ket{\Psi_0}
+\end{gather}
+which solves $\rho^0$ as:
+\begin{gather}
+    \rho^0_{\alpha \beta} = \sum_{v} \bra{\alpha} \ket{v} \bra{v} \ket{\beta}, \quad \text{where} \ket{v} \text{ is the occupied single-particle eigen state}
+\end{gather}
+Just as $\rho$, $\rho^0$ is idempotent as well. $\rho^0$ acts like a projector onto the occupied subspace, conjugating with $\sigma^0 \coloneqq \bm{1} - \rho^0$. This property becomes useful when we try to solve the linear response of $\rho$ from Eq.~\eqref{eq:EoM_mean_field}. First we rewrite $\rho$ as a perturbation series in order of $f(t)$:
+\begin{gather}
+    \rho = \sum_{n=0} \rho^{(n)}
+\end{gather}
+and the linear response of Eq.~\eqref{eq:EoM_density_matrix}:
+\begin{gather}
+    i\hbar \partial_t \rho^{(1)} = [h(\rho^0), \rho^{(1)}] + [h'(\rho^0)\cdot\rho^{(1)}, \rho^0] + [o f(t), \rho^0]. \label{eq:EoM_linear_response}
+\end{gather}
+Up to first order, the idempotent property $\rho^2 = \rho$ implies:
+\begin{gather}
+    \rho^0 \rho^{(1)} + \rho^{(1)} \rho^0 = \rho^{(1)} \\
+    \Rightarrow \rho^{(1)}_{VV} = \rho^0 \rho^{(1)} \rho^0 = 0, \quad \rho^{(1)}_{CC} = \sigma^0 \rho^{(1)} \sigma^0 = 0
+\end{gather}
+which tells us that the linear response $\rho^{(1)}$ only has matrix elements between valence and conduction subspaces. We can project Eq.~\eqref{eq:EoM_linear_response} onto the $VC$ and $CV$ subspaces to get a simplified EoM (the lower case $v,v',\dots$ and $c,c',\dots$ denote valence and conduction eigenstates of $h(\rho^0)$ respectively):
+\begin{align}
+    i\hbar \partial_t \rho_{vc}^{(1)} =& h(\rho^0)_{vv'} \rho^{(1)}_{v'c} - \rho^{(1)}_{vc'} h(\rho^0)_{c' c} -(h'_{vc, v'c'} \rho^{(1)}_{v'c'} + h'_{vc, c'v'}\rho^{(1)}_{c' v'}) - o_{vc} f(t) \\
+    =& \left[(\xi_{v} - \xi_c)\delta_{vv'} \delta_{cc'} - V_{vc'v'c} + V_{vc'cv'}\right]\rho^{(1)}_{v'c'} - \left(V_{vv'c'c} - V_{vv'cc'}\right) \rho^{(1)}_{c'v'} - o_{vc} f(t) \label{eq:EoM_VC_Block} \\[1.5em]
+    i\hbar \partial_t \rho_{cv}^{(1)} =& \xi_c \rho^{(1)}_{cv} - \rho^{(1)}_{cv} \xi_v + h'_{cv, v'c'} \rho^{(1)}_{v'c'} + h'_{cv, c'v'} \rho^{(1)}_{c'v'} + o_{cv} f(t) \\
+    =& \left[(\xi_c - \xi_v)\delta_{cc'}\delta_{vv'} + V_{cv'c'v} - V_{cv'vc'}\right] \rho^{(1)}_{c'v'} + (V_{cc'v'v} - V_{cc'vv'}) \rho^{(1)}_{v'c'} + o_{cv} f(t) \label{eq:EoM_CV_Block}
+\end{align}
+where
+\begin{align}
+    [h'(\rho^0) \cdot \rho^{(1)}]_{mn} =& \sum_{ij} h'_{mn, ij} \rho^{(1)}_{ij} ,\quad \pfpx{h_{mn}}{\rho_{ij}} = V_{mjin} - V_{mjni} \\
+    =& \sum_{ij} h'_{mn, ij} \left(\rho^{(1)}_{VC} + \rho^{(1)}_{CV} \right)_{ij} \\
+    =& \sum_{v' c'} h'_{mn, v'c'} \rho^{(1)}_{v'c'} + h'_{mn, c'v'} \rho^{(1)}_{c'v'}
+\end{align}
+We define the dynamical matrix elements:
+\begin{gather}
+    \mathcal{E}_{cv, c'v'} = (\xi_c - \xi_v)\delta_{cc'}\delta_{vv'} + V_{cv'c'v} - V_{cv'vc'}, \quad \Gamma_{cv, v'c'} = V_{cc'v'v} - V_{cc'vv'} \\
+    \mathcal{E}_{vc, v'c'} = - \mathcal{E}^*_{cv, c'v'}, \quad \Gamma_{vc, c'v'} = -\Gamma^*_{cv, v'c'}
+\end{gather}
+To select the causal (retarded) solution, we switch on the perturbation adiabatically from $t=-\infty$: $f(t)\to f(t)\,e^{\eta t}$ with $\eta\to 0^+$. Upon Fourier transform this amounts to the replacement $\omega\to\omega+i\eta$ in every energy denominator.  With this prescription understood, the 2 EoMs Eq.~\eqref{eq:EoM_VC_Block} and Eq.~\eqref{eq:EoM_CV_Block} can be written in the frequency space as:
+\begin{gather}
+    \begin{pmatrix}
+        \hbar \omega & \\
+        & -\hbar \omega
+    \end{pmatrix}
+    \begin{pmatrix}
+        \rho^{(1)}_{CV} \\ \rho^{(1)}_{VC}
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        \mathcal{E} & \Gamma \\
+        \Gamma^* & \mathcal{E}^*
+    \end{pmatrix}
+    \begin{pmatrix}
+        \rho^{(1)}_{CV} \\ \rho^{(1)}_{VC}
+    \end{pmatrix} + 
+    \begin{pmatrix}
+        o_{CV} & \\ & o_{VC}
+    \end{pmatrix} f(\omega) \label{eq:EoM_complete}
+\end{gather}
+
+
+\section{Application to Homogeneous Electron Gas}
+The Hamiltonian of homogeneous electron gas is:
+\begin{gather}
+    \hat{H} = \hat{H}^0 + \hat{V}
+\end{gather}
+Where the interaction $\hat{V}$ can be written in \eqref{eq:SB_Hamiltonian} fashion:
+\begin{gather}
+    \hat{V} = \frac{1}{2 \Omega}\sum_{\vb{q} \vb{k} \vb{p}} \sum_{\alpha \beta} V(\vb{q}) \hat{c}^\dagger_{\vb{k} \alpha} \hat{c}^\dagger_{\vb{p} \beta} \hat{c}_{\vb{p} + \vb{q} \beta} \hat{c}_{\vb{k} - \vb{q} \alpha} = \frac{1}{2} \sum_{ijkl} V_{ijkl} \hat{c}^\dagger_i \hat{c}^\dagger_j \hat{c}_k \hat{c}_l\\
+    V_{ijkl} = \frac{1}{2\Omega}\Bigl[\underbrace{\delta_{s_i s_l}\,\delta_{s_j s_k}\,V(\vb{p}_i - \vb{p}_l)}_{\text{direct}} - \underbrace{\delta_{s_i s_k}\,\delta_{s_j s_l}\,V(\vb{p}_i - \vb{p}_k)}_{\text{exchange}}\Bigr]\;\delta_{\vb{p}_i + \vb{p}_j,\, \vb{p}_k + \vb{p}_l}
+\end{gather}
+And the kinetic energy term is:
+\begin{gather}
+    \hat{H}^0 = \sum_{\alpha  \vb{k}} \eps_{\vb{k}} \hat{c}^\dagger_{\vb{k} \alpha} \hat{c}_{\vb{k} \alpha} = \sum_{ij} t_{ij} \hat{c}^\dagger_i \hat{c}_j, \quad t_{ij} = \eps_{\vb{p}_i} \delta_{s_i s_j} \delta_{\vb{p}_i, \vb{p}_j}
+\end{gather}
+The linear response of density operator is give as:
+
+\begin{gather}
+    \delta \avg{\hat{n}(\vb{q})}(\omega) = \sum_{\vb{k} \alpha} [\rho^{(1)}_{(\vb{k} + \vb{q} \alpha) (\vb{k} \alpha)}]_{VC} + [\rho^{(1)}_{(\vb{k} + \vb{q} \alpha) (\vb{k} \alpha)}]_{CV} \\
+    [\rho^{(1)}_{(\vb{k} + \vb{q} \alpha) (\vb{k} \alpha)}]_{VC} \propto \Theta(k_F - \abs{\vb{k} + \vb{q}}) \Theta(\abs{\vb{k}}-k_F), \quad [\rho^{(1)}_{(\vb{k} + \vb{q} \alpha) (\vb{k} \alpha)}]_{CV} \propto \Theta(\abs{\vb{k} + \vb{q}}-k_F) \Theta(k_F - \abs{\vb{k}})
+\end{gather}
+
+Now we try to explicitly write down the EoM for $\rho^{(1)}_{\vb{k} + \vb{q}, \alpha; \vb{k} \alpha}$ from Eq.~\eqref{eq:EoM_complete}:
+\begin{gather}
+    \hbar \omega[\rho^{(1)}_{(\vb{k} + \vb{q}\alpha) (\vb{k} \alpha)}]_{CV} = \mathcal{E}_{(\vb{k}+\vb{q} \alpha) (\vb{k} \alpha), (\vb{p} \beta)(\vb{l} \gamma)} [\rho^{(1)}_{(\vb{p} \beta) (\vb{l} \gamma)}]_{CV} \nonumber \\
+    + \Gamma_{(\vb{k}+\vb{q} \alpha) (\vb{k} \alpha), (\vb{p}' \beta')(\vb{l}' \gamma')} [\rho^{(1)}_{(\vb{p}' \beta') (\vb{l}' \gamma')}]_{VC} + o_{(\vb{k}+\vb{q} \alpha) (\vb{k} \alpha)} f(\omega) \label{eq:EoM_HEG_CV} 
+\end{gather}
+
+We now evaluate each piece using the HEG interaction matrix element \eqref{eq:SB_Hamiltonian}. The mapping to \eqref{eq:EoM_CV_Block} is $c = (\vb{k}+\vb{q}, \alpha)$, $v = (\vb{k}, \alpha)$, $c' = (\vb{p}, \beta)$, $v' = (\vb{l}, \gamma)$, with $\abs{\vb{k}+\vb{q}}, \abs{\vb{p}} > k_F$ and $\abs{\vb{k}}, \abs{\vb{l}} < k_F$.
+
+\paragraph{Term $V_{cv'c'v}$.}
+Setting $i = (\vb{k}+\vb{q}, \alpha)$, $j = (\vb{l}, \gamma)$, $k = (\vb{p}, \beta)$, $l = (\vb{k}, \alpha)$ in the interaction matrix element:
+\begin{itemize}
+    \item Momentum conservation: $(\vb{k}+\vb{q}) + \vb{l} = \vb{p} + \vb{k} \;\Rightarrow\; \vb{l} = \vb{p} - \vb{q}$
+    \item Direct: $\delta_{s_i s_l}\delta_{s_j s_k} V(\vb{p}_i - \vb{p}_l) = \delta_{\gamma \beta}\, V(\vb{q})$
+    \item Exchange: $\delta_{s_i s_k}\delta_{s_j s_l} V(\vb{p}_i - \vb{p}_k) = \delta_{\alpha \beta}\delta_{\alpha \gamma}\, V(\vb{k}+\vb{q}-\vb{p})$
+\end{itemize}
+\begin{gather}
+    V_{cv'c'v} = \frac{1}{2\Omega}\bigl[\delta_{\beta\gamma}\,V(\vb{q}) - \delta_{\alpha\beta}\delta_{\alpha\gamma}\,V(\vb{k}+\vb{q}-\vb{p})\bigr]\;\delta_{\vb{l},\,\vb{p}-\vb{q}}
+\end{gather}
+
+\paragraph{Term $V_{cv'vc'}$.}
+Setting $i = (\vb{k}+\vb{q}, \alpha)$, $j = (\vb{l}, \gamma)$, $k = (\vb{k}, \alpha)$, $l = (\vb{p}, \beta)$:
+\begin{itemize}
+    \item Momentum conservation: same $\delta_{\vb{l},\,\vb{p}-\vb{q}}$
+    \item Direct: $\delta_{s_i s_l}\delta_{s_j s_k} V(\vb{p}_i - \vb{p}_l) = \delta_{\alpha\beta}\delta_{\gamma\alpha}\,V(\vb{k}+\vb{q}-\vb{p})$
+    \item Exchange: $\delta_{s_i s_k}\delta_{s_j s_l} V(\vb{p}_i - \vb{p}_k) = \delta_{\gamma\beta}\,V(\vb{q})$
+\end{itemize}
+\begin{gather}
+    V_{cv'vc'} = \frac{1}{2\Omega}\bigl[\delta_{\alpha\beta}\delta_{\alpha\gamma}\,V(\vb{k}+\vb{q}-\vb{p}) - \delta_{\beta\gamma}\,V(\vb{q})\bigr]\;\delta_{\vb{l},\,\vb{p}-\vb{q}}
+\end{gather}
+
+\paragraph{Result.} Since terms II and III are exact negatives of each other, they double upon subtraction:
+\begin{gather}
+    V_{cv'c'v} - V_{cv'vc'} = \frac{1}{\Omega}\bigl[\delta_{\beta\gamma}\,V(\vb{q}) - \delta_{\alpha\beta}\delta_{\alpha\gamma}\,V(\vb{k}+\vb{q}-\vb{p})\bigr]\;\delta_{\vb{l},\,\vb{p}-\vb{q}}
+\end{gather}
+and the full dynamical matrix element reads:
+\begin{align}
+    \mathcal{E}_{(\vb{k}+\vb{q}\, \alpha)(\vb{k}\, \alpha),\, (\vb{p}\, \beta)(\vb{l}\, \gamma)} =\;& (\xi_{\vb{k}+\vb{q}} - \xi_{\vb{k}})\,\delta_{\vb{p},\vb{k}+\vb{q}}\,\delta_{\vb{l},\vb{k}}\,\delta_{\alpha\beta}\,\delta_{\alpha\gamma} \nonumber \\
+    &+ \frac{1}{\Omega}\Bigl[\underbrace{\delta_{\beta\gamma}\,V(\vb{q})}_{\text{direct}} - \underbrace{\delta_{\alpha\beta}\,\delta_{\alpha\gamma}\,V(\vb{k}+\vb{q}-\vb{p})}_{\text{exchange}}\Bigr]\,\delta_{\vb{l},\,\vb{p}-\vb{q}} \label{eq:E_HEG}
+\end{align}
+where $\xi_{\vb{k}} = \eps_{\vb{k}} + \Sigma^{\mathrm{HF}}(\vb{k})$ is the Hartree--Fock single-particle energy. Note that:
+\begin{enumerate}
+    \item Momentum conservation forces $\vb{l} = \vb{p} - \vb{q}$ in the interaction part, so only particle--hole pairs with the \emph{same} transfer momentum $\vb{q}$ couple; different $\vb{q}$-sectors decouple.
+    \item The direct (Hartree) term $\frac{1}{\Omega}\delta_{\beta\gamma} V(\vb{q})$ depends only on $\vb{q}$, not on $\vb{k}$ or $\vb{p}$ individually. Retaining only this term (and dropping exchange) recovers \textbf{RPA}.
+    \item The exchange (Fock) term $-\frac{1}{\Omega}\delta_{\alpha\beta}\delta_{\alpha\gamma} V(\vb{k}+\vb{q}-\vb{p})$ depends on the momentum transfer between the two particle--hole pairs and is restricted to same spin ($\alpha = \beta = \gamma$). This is the \textbf{TDHF correction beyond RPA}.
+\end{enumerate}
+
+Next we evaluate $\Gamma_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha),\,(\vb{p}'\,\beta')(\vb{l}'\,\gamma')}$ which couples to the VC block $[\rho^{(1)}_{(\vb{p}'\,\beta')(\vb{l}'\,\gamma')}]_{VC}$ with $\abs{\vb{p}'} < k_F$ (valence) and $\abs{\vb{l}'} > k_F$ (conduction). From Eq.~\eqref{eq:EoM_CV_Block} the mapping is $c = (\vb{k}+\vb{q},\alpha)$, $v = (\vb{k},\alpha)$, $v' = (\vb{p}',\beta')$, $c' = (\vb{l}',\gamma')$, and the definition gives:
+\begin{gather}
+    \Gamma_{cv,\,v'c'} = V_{cc'v'v} - V_{cc'vv'}
+\end{gather}
+
+\paragraph{Term $V_{cc'v'v}$.}
+Setting $i = (\vb{k}+\vb{q},\alpha)$, $j = (\vb{l}',\gamma')$, $k = (\vb{p}',\beta')$, $l = (\vb{k},\alpha)$:
+\begin{itemize}
+    \item Momentum conservation: $(\vb{k}+\vb{q}) + \vb{l}' = \vb{p}' + \vb{k} \;\Rightarrow\; \vb{l}' = \vb{p}' - \vb{q}$
+    \item Direct: $\delta_{s_i s_l}\delta_{s_j s_k}\,V(\vb{p}_i - \vb{p}_l) = \delta_{\beta'\gamma'}\,V(\vb{q})$
+    \item Exchange: $\delta_{s_i s_k}\delta_{s_j s_l}\,V(\vb{p}_i - \vb{p}_k) = \delta_{\alpha\beta'}\delta_{\alpha\gamma'}\,V(\vb{k}+\vb{q}-\vb{p}')$
+\end{itemize}
+\begin{gather}
+    V_{cc'v'v} = \frac{1}{2\Omega}\bigl[\delta_{\beta'\gamma'}\,V(\vb{q}) - \delta_{\alpha\beta'}\delta_{\alpha\gamma'}\,V(\vb{k}+\vb{q}-\vb{p}')\bigr]\;\delta_{\vb{l}',\,\vb{p}'-\vb{q}}
+\end{gather}
+
+\paragraph{Term $V_{cc'vv'}$.}
+Setting $i = (\vb{k}+\vb{q},\alpha)$, $j = (\vb{l}',\gamma')$, $k = (\vb{k},\alpha)$, $l = (\vb{p}',\beta')$:
+\begin{itemize}
+    \item Momentum conservation: same $\delta_{\vb{l}',\,\vb{p}'-\vb{q}}$
+    \item Direct: $\delta_{s_i s_l}\delta_{s_j s_k}\,V(\vb{p}_i - \vb{p}_l) = \delta_{\alpha\beta'}\delta_{\gamma'\alpha}\,V(\vb{k}+\vb{q}-\vb{p}')$
+    \item Exchange: $\delta_{s_i s_k}\delta_{s_j s_l}\,V(\vb{p}_i - \vb{p}_k) = \delta_{\gamma'\beta'}\,V(\vb{q})$
+\end{itemize}
+\begin{gather}
+    V_{cc'vv'} = \frac{1}{2\Omega}\bigl[\delta_{\alpha\beta'}\delta_{\alpha\gamma'}\,V(\vb{k}+\vb{q}-\vb{p}') - \delta_{\beta'\gamma'}\,V(\vb{q})\bigr]\;\delta_{\vb{l}',\,\vb{p}'-\vb{q}}
+\end{gather}
+
+\paragraph{Result.} Again the two terms are exact negatives, so:
+\begin{align}
+    \Gamma_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha),\,(\vb{p}'\,\beta')(\vb{l}'\,\gamma')} = \frac{1}{\Omega}\Bigl[\underbrace{\delta_{\beta'\gamma'}\,V(\vb{q})}_{\text{direct}} - \underbrace{\delta_{\alpha\beta'}\,\delta_{\alpha\gamma'}\,V(\vb{k}+\vb{q}-\vb{p}')}_{\text{exchange}}\Bigr]\,\delta_{\vb{l}',\,\vb{p}'-\vb{q}} \label{eq:Gamma_HEG}
+\end{align}
+Note that $\Gamma$ has exactly the same interaction structure as the off-diagonal part of $\mathcal{E}$ in \eqref{eq:E_HEG} (with the replacement $\vb{p} \to \vb{p}'$, $\beta \to \beta'$, $\gamma \to \gamma'$), but without the diagonal quasiparticle energy term. Momentum conservation again forces $\vb{l}' = \vb{p}' - \vb{q}$, confirming that the $\vb{q}$-sector decoupling holds for the full EoM including the $\Gamma$ coupling between CV and VC blocks.
+
+\subsection{RPA equation of motion}
+Dropping the exchange terms in \eqref{eq:E_HEG} and \eqref{eq:Gamma_HEG}, the dynamical matrices reduce to:
+\begin{align}
+    \mathcal{E}^{\mathrm{RPA}}_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha),\,(\vb{p}\,\beta)(\vb{l}\,\gamma)} &= (\xi_{\vb{k}+\vb{q}} - \xi_{\vb{k}})\,\delta_{\vb{p},\vb{k}+\vb{q}}\,\delta_{\vb{l},\vb{k}}\,\delta_{\alpha\beta}\,\delta_{\alpha\gamma} + \frac{1}{\Omega}\,\delta_{\beta\gamma}\,V(\vb{q})\,\delta_{\vb{l},\,\vb{p}-\vb{q}} \\
+    \Gamma^{\mathrm{RPA}}_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha),\,(\vb{p}'\,\beta')(\vb{l}'\,\gamma')} &= \frac{1}{\Omega}\,\delta_{\beta'\gamma'}\,V(\vb{q})\,\delta_{\vb{l}',\,\vb{p}'-\vb{q}}
+\end{align}
+Substituting into Eq.~\eqref{eq:EoM_HEG_CV} and performing the contractions (summing over $\vb{p},\beta,\vb{l},\gamma$ and $\vb{p}',\beta',\vb{l}',\gamma'$):
+
+\paragraph{$\mathcal{E}$ term.}
+The diagonal part collapses via the Kronecker deltas:
+\begin{gather}
+    (\xi_{\vb{k}+\vb{q}} - \xi_{\vb{k}})\,\delta_{\vb{p},\vb{k}+\vb{q}}\,\delta_{\vb{l},\vb{k}}\,\delta_{\alpha\beta}\,\delta_{\alpha\gamma}\;[\rho^{(1)}_{(\vb{p}\,\beta)(\vb{l}\,\gamma)}]_{CV} = (\xi_{\vb{k}+\vb{q}} - \xi_{\vb{k}})\;[\rho^{(1)}_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha)}]_{CV}
+\end{gather}
+The direct part, after eliminating $\vb{l} = \vb{p} - \vb{q}$ and $\beta = \gamma$:
+\begin{gather}
+    \frac{V(\vb{q})}{\Omega}\sum_{\vb{p}\,\beta} [\rho^{(1)}_{(\vb{p}\,\beta)(\vb{p}-\vb{q}\,\beta)}]_{CV}
+\end{gather}
+Relabelling $\vb{p} = \vb{k}' + \vb{q}$ (with $\abs{\vb{k}'+\vb{q}} > k_F$, $\abs{\vb{k}'} < k_F$), this becomes:
+\begin{gather}
+    \frac{V(\vb{q})}{\Omega}\sum_{\vb{k}'\,\beta} [\rho^{(1)}_{(\vb{k}'+\vb{q}\,\beta)(\vb{k}'\,\beta)}]_{CV}
+\end{gather}
+
+\paragraph{$\Gamma$ term.}
+After eliminating $\vb{l}' = \vb{p}' - \vb{q}$ and $\beta' = \gamma'$:
+\begin{gather}
+    \frac{V(\vb{q})}{\Omega}\sum_{\vb{p}'\,\beta'} [\rho^{(1)}_{(\vb{p}'\,\beta')(\vb{p}'-\vb{q}\,\beta')}]_{VC}
+\end{gather}
+Relabelling $\vb{k}' = \vb{p}' - \vb{q}$ (so $\vb{p}' = \vb{k}'+\vb{q}$, with $\abs{\vb{k}'+\vb{q}} < k_F$ and $\abs{\vb{k}'} > k_F$):
+\begin{gather}
+    \frac{V(\vb{q})}{\Omega}\sum_{\vb{k}'\,\beta'} [\rho^{(1)}_{(\vb{k}'+\vb{q}\,\beta')(\vb{k}'\,\beta')}]_{VC}
+\end{gather}
+
+\paragraph{Combined RPA EoM.}
+Recognising that the two interaction sums together reconstruct the density response from Eq.~\eqref{eq:EoM_HEG_CV}:
+\begin{gather}
+    \delta\avg{\hat{n}(\vb{q})}(\omega) = \sum_{\vb{k}'\,\beta} \left([\rho^{(1)}_{(\vb{k}'+\vb{q}\,\beta)(\vb{k}'\,\beta)}]_{CV} + [\rho^{(1)}_{(\vb{k}'+\vb{q}\,\beta)(\vb{k}'\,\beta)}]_{VC}\right) \label{eq:LR_electron_density}
+\end{gather}
+the RPA equation of motion becomes:
+\begin{gather}
+    \boxed{\hbar\omega\;[\rho^{(1)}_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha)}]_{CV} = (\xi_{\vb{k}+\vb{q}} - \xi_{\vb{k}})\;[\rho^{(1)}_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha)}]_{CV} + \frac{V(\vb{q})}{\Omega}\,\delta\avg{\hat{n}(\vb{q})}(\omega) + o_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha)}\,f(\omega)} \label{eq:RPA_EoM_CV}
+\end{gather}
+The direct interaction term depends on $\vb{k}$ and $\alpha$ only through the left-hand side; the coupling to all other particle--hole pairs is entirely through the collective density fluctuation $\delta\avg{\hat{n}(\vb{q})}(\omega)$, which is the hallmark of RPA screening. We can obtain the other half of Eq.~\eqref{eq:EoM_complete} through complex conjugation. First the Hermitian nature of $\rho$ implies:
+\begin{gather}
+    \rho^{(1)}_{vc} (t) = (\rho^{(1)}_{cv} (t))^* \quad \Rightarrow \quad \rho^{(1)}_{vc}(\omega) = (\rho^{(1)}_{cv}(-\omega))^*
+\end{gather}
+complex conjugating the CV block EoM Eq.~\eqref{eq:RPA_EoM_CV} and replacing $\omega \to -\omega$ gives the VC block EoM:
+\begin{align}
+    -\hbar \omega [\rho^{(1)}_{(\vb{k} \alpha)(\vb{k} + \vb{q} \alpha)}]_{VC} =& (\xi_{\vb{k} + \vb{q}} - \xi_{\vb{k}})[\rho^{(1)}_{(\vb{k} \alpha)(\vb{k} + \vb{q} \alpha)}]_{VC} + \frac{V(\vb{q})}{\Omega} [\delta\avg{\hat{n}(\vb{q})}(-\omega)]^* + o_{(\vb{k} \alpha)(\vb{k} + \vb{q} \alpha)} f(-\omega)^* \\
+    =& (\xi_{\vb{k} + \vb{q}} - \xi_{\vb{k}})[\rho^{(1)}_{(\vb{k} \alpha)(\vb{k} + \vb{q} \alpha)}]_{VC} + \frac{V(\vb{q})}{\Omega} \delta\avg{\hat{n}(-\vb{q})}(\omega)+ o_{(\vb{k} \alpha)(\vb{k} + \vb{q} \alpha)} f(\omega)
+\end{align}
+To summarise, $\rho^{(1)}_{CV}$ and $\rho^{(1)}_{VC}$ are solved as:
+\begin{gather}
+    \boxed{
+        [\rho^{(1)}_{(\vb{k} + \vb{q} \alpha) (\vb{k} \alpha)}]_{CV} = \frac{\frac{V(\vb{q})}{\Omega} \delta \avg{\hat{n}(\vb{q})}(\omega) + o_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha)}\,f(\omega)}{\hbar(\omega + i\eta) - (\xi_{\vb{k}+\vb{q}} - \xi_{\vb{k}})} (1 - f_{\vb{k} + \vb{q}}) f_{\vb{k}} 
+    }\\
+    \boxed{
+        [\rho^{(1)}_{(\vb{k} + \vb{q} \alpha) (\vb{k} \alpha)}]_{VC} = \frac{\frac{V(\vb{q})}{\Omega} \delta \avg{\hat{n}(\vb{q})}(\omega) + o_{(\vb{k}+\vb{q}\,\alpha)(\vb{k}\,\alpha)}\,f(\omega)}{- \hbar(\omega + i\eta) - (\xi_{\vb{k}} - \xi_{\vb{k}+\vb{q}})} f_{\vb{k} + \vb{q}} (1 - f_{\vb{k}}) 
+    }
+\end{gather}
+Where we abbreviate the Fermi occupation factors as $f_{\vb{k}} = \Theta(\eps_F - \xi_{\vb{k}})$. Usually the external field is independent of the system's internal momenta, therefore we here take $o_{(\vb{k} + \vb{q} \alpha)(\vb{k} \alpha)} = o_{\vb{q}}$ and Eq.~\eqref{eq:LR_electron_density} can be solved as:
+\begin{gather}
+    \Pi^0(\vb{q}, \omega) = \sum_{\vb{k}}\frac{(1-f_{\vb{k} + \vb{q}})f_{\vb{k}} - f_{\vb{k} + \vb{q}}(1-f_{\vb{k}})}{\hbar (\omega + i\eta) - (\xi_{\vb{k} + \vb{q}} - \xi_{\vb{k}})} \\
+    \delta\avg{\hat{n}(\vb{q})}(\omega) = \Pi^0(\vb{q},\omega)\left(\frac{V(\vb{q})}{\Omega} \delta\avg{\hat{n}(\vb{q})}(\omega) + o_{\vb{q}} f(\omega)\right) \\
+    \Rightarrow \delta\avg{\hat{n}(\vb{q})}(\omega) = \frac{\Pi^0(\vb{q},\omega)}{1 - \frac{V(\vb{q})}{\Omega} \Pi^0(\vb{q},\omega)} o_{\vb{q}} f(\omega)
+\end{gather} 
+The $i\eta$ prescription makes $\Pi^0$ the \emph{retarded} response function, whose poles lie below the real $\omega$-axis, ensuring causality. $\Pi^0(\vb{q},\omega)$ has the exact form of the Lindhard function \cite{FetterWalecka}, except that the energy difference in the denominator is from the Hartree-Fock single-particle spectrum instead of the non-interacting one:
+\begin{gather}
+    \xi_{\vb{k} \alpha} = \eps_{\vb{k}} + \frac{1}{\Omega}\sum_{\vb{q} \gamma} \left[V(0) - \delta_{\alpha \gamma} V(\vb{k} - \vb{q})\right] \rho^0_{\vb{q} \gamma}, \quad \rho^0_{\vb{q} \gamma} = \avg{\hat{c}^\dagger_{\vb{q} \gamma} \hat{c}_{\vb{q} \gamma}}_0
+\end{gather}
+The diverging $V(0)$ is cancelled by the positive background charge, and if we ignore the remaining exchagne term, we recover the original RPA density-density response function.
+
+% % ══════════════════════════════════════════
+% \section{Discussion}
+% \label{sec:discussion}
+% % ══════════════════════════════════════════
+
+
+
+% ══════════════════════════════════════════
+% References
+% ══════════════════════════════════════════
+\bibliographystyle{apsrev4-2}
+\bibliography{HF_EoM.bib}  % uncomment when you have a .bib file
+
+\end{document}
